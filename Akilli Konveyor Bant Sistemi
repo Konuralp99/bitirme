@@ -1,0 +1,218 @@
+// Kütüphaneler ===============================================
+#include <Servo.h>
+
+// Tanımlamalar ===============================================
+#define ServoKir   9
+#define ServoMav  10
+#define ServoYes  11
+#define Motor      2
+#define Eko        3
+#define Tetik      4
+#define SensorKir  5
+#define SensorMav  6
+#define SensorYes  7
+
+// Değişkenler ================================================
+// int
+int iPozKir  = 90;
+int iPozMav  = 90;
+int iPozYes  = 90;
+int iSure    = 0;
+int iMesafe  = 255;
+int iRenk    = 0; // 0: Algılanmadı 1: Kırmızı 2: Mavi 3: Yeşil
+// servo
+Servo Servo_Kir;
+Servo Servo_Mav;
+Servo Servo_Yes;
+
+// Ayarlar ====================================================
+void setup()
+{
+  // Pin yönlerini ayarla -------------------------------------
+  pinMode(Motor, OUTPUT);
+  pinMode(Tetik, OUTPUT);
+  pinMode(ServoKir, OUTPUT);
+  pinMode(ServoMav, OUTPUT);
+  pinMode(ServoYes, OUTPUT);
+  pinMode(Eko, INPUT);
+  pinMode(SensorKir, INPUT);
+  pinMode(SensorMav, INPUT);
+  pinMode(SensorYes, INPUT);
+  
+  // Servo motorları bağla ------------------------------------
+  Servo_Kir.attach(ServoKir, 500, 2500);
+  Servo_Mav.attach(ServoMav, 500, 2500);
+  Servo_Yes.attach(ServoYes, 500, 2500);
+  
+  // Pinleri sıfırla -------------------------------------------
+  digitalWrite(Motor, LOW);
+  digitalWrite(Tetik, LOW);
+  digitalWrite(ServoKir, LOW);
+  digitalWrite(ServoMav, LOW);
+  digitalWrite(ServoYes, LOW);
+  
+  // Seri portu başlat -----------------------------------------
+  Serial.begin(9600);
+  
+  // Servo motorları 0°'ye getir -------------------------------
+  // Kırmızı kolun olduğu servoyu 0º döndür ....................
+  while (iPozKir > 0) 
+  {
+    iPozKir--;
+  	Servo_Kir.write(iPozKir);
+    delay(15);
+  }
+  
+  // Mavi kolun olduğu servoyu 0º döndür .......................
+  while (iPozMav > 0) 
+  {
+    iPozMav--;
+    Servo_Mav.write(iPozMav);
+    delay(15);
+  }
+    
+  // Yeşil kolun olduğu servoyu 0º döndür ......................
+  while (iPozYes > 0) 
+  {
+    iPozYes--;
+    Servo_Yes.write(iPozYes);
+    delay(15);
+  }
+}
+
+// Ana döngü ===================================================
+void loop()
+{
+  // Mesafeyi ölç ---------------------------------------------
+  digitalWrite(Tetik, HIGH);
+  delayMicroseconds(100);
+  digitalWrite(Tetik, LOW);
+  iSure   = pulseIn(Eko, HIGH);
+  iMesafe = (iSure/2.0) / 29.1;
+  
+  // Mesafeyi göster ------------------------------------------
+  Serial.print("Mesafe: ");
+  Serial.print(iMesafe);
+  Serial.println(" cm");
+  delay(500);
+  
+  // Cisim gelene kadar bekle ----------------------------------
+  while (iMesafe > 50)
+  {
+  	// Mesafeyi ölç ..........................................
+  	digitalWrite(Tetik, HIGH);
+  	delayMicroseconds(100);
+  	digitalWrite(Tetik, LOW);
+  	iSure   = pulseIn(Eko, HIGH);
+  	iMesafe = (iSure/2.0) / 29.1;
+  
+  	// Mesafeyi göster .......................................
+  	Serial.print("Mesafe: ");
+  	Serial.print(iMesafe);
+  	Serial.println(" cm");
+  	delay(500);
+  }
+  
+  // Cisim algılandı bandı çalıştır ----------------------------
+  // Mesafeyi göster ...........................................
+  Serial.print("Cisim algilandi. ");
+  Serial.print("Mesafe: ");
+  Serial.print(iMesafe);
+  Serial.println(" cm");
+  // Bandı çalıştır ............................................
+  digitalWrite(Motor, HIGH);
+  
+  // Cismin rengini algıla -------------------------------------
+  if (digitalRead(SensorKir) == 0) iRenk = 1;  
+  if (digitalRead(SensorMav) == 0) iRenk = 2;  
+  if (digitalRead(SensorYes) == 0) iRenk = 3;  
+  
+  // Cisim kırmızı ise kırmızı kolu 45º diğerlerini 0º yap -----
+  if (iRenk == 1)
+  {    
+    // Kırmızı kolun olduğu servoyu 45º döndür .................
+    while (iPozKir < 45) 
+    {
+      iPozKir++;
+  	  Servo_Kir.write(iPozKir);
+      delay(15);
+    }
+  
+
+    // Mavi kolun olduğu servoyu 0º döndür .....................
+    while (iPozMav > 0) 
+    {
+      iPozMav--;
+      Servo_Mav.write(iPozMav);
+      delay(15);
+    }
+    
+    // Yeşil kolun olduğu servoyu 0º döndür ....................
+    while (iPozYes > 0) 
+    {
+      iPozYes--;
+      Servo_Yes.write(iPozYes);
+      delay(15);
+    }
+  }
+  
+  // Cisim mavi ise mavi kolu 45º diğerlerini 0º yap -----------
+  if (iRenk == 2)
+  {    
+    // Mavi kolun olduğu servoyu 45º döndür ....................
+    while (iPozMav < 45) 
+    {
+      iPozMav++;
+  	  Servo_Mav.write(iPozMav);
+      delay(15);
+    }
+  
+    // Kırmızı kolun olduğu servoyu 0º döndür ..................
+    while (iPozKir > 0) 
+    {
+      iPozKir--;
+      Servo_Kir.write(iPozKir);
+      delay(15);
+    }
+    
+    // Yeşil kolun olduğu servoyu 0º döndür ....................
+    while (iPozYes > 0) 
+    {
+      iPozYes--;
+      Servo_Yes.write(iPozYes);
+      delay(15);
+    }
+  }
+  
+  // Cisim yeşil ise yeşil kolu 45º diğerlerini 0º yap ---------
+  if (iRenk == 3)
+  {    
+    // Yeşil kolun olduğu servoyu 45º'ye döndür ................
+    while (iPozYes < 45) 
+    {
+      iPozYes++;
+  	  Servo_Yes.write(iPozYes);
+      delay(15);
+    }
+  
+    // Kırmızı kolun olduğu servoyu 0º döndür ..................
+    while (iPozKir > 0) 
+    {
+      iPozKir--;
+      Servo_Kir.write(iPozKir);
+      delay(15);
+    }
+    
+    // Mavi kolun olduğu servoyu 0º döndür .....................
+    while (iPozMav > 0) 
+    {
+      iPozMav--;
+      Servo_Mav.write(iPozMav);
+      delay(15);
+    }
+  }
+  
+  // Cismin kutuya atılmasını bekle ve bandı durudur -----------
+  delay(5000);
+  digitalWrite(Motor, LOW);
+}
